@@ -15,7 +15,6 @@ import org.http4s.server.middleware.Timeout
 
 import scala.concurrent.duration._
 
-
 object HttpApi {
   def make[F[_]: Async](services: Services[F]): HttpApi[F] = HttpApi[F](services)
 }
@@ -26,7 +25,7 @@ final case class HttpApi[F[_]: Async] private (services: Services[F]) {
   private val openRoutes: HttpRoutes[F] = fsmRoutes
 
   private val routes: HttpRoutes[F] = Router(
-    version.v1            -> openRoutes
+    version.v1 -> openRoutes
   )
 
   private val middleware: HttpRoutes[F] => HttpRoutes[F] = {

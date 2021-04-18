@@ -12,8 +12,8 @@ import org.http4s.dsl.Http4sDsl
 object refined {
 
   implicit def refinedQueryParamDecoder[T: QueryParamDecoder, P](
-                                                                  implicit ev: Validate[T, P]
-                                                                ): QueryParamDecoder[T Refined P] =
+      implicit ev: Validate[T, P]
+  ): QueryParamDecoder[T Refined P] =
     QueryParamDecoder[T].emap(refineV[P](_).leftMap(m => ParseFailure(m, m)))
 
   implicit class RefinedRequestDecoder[F[_]: JsonDecoder: MonadThrow](req: Request[F]) extends Http4sDsl[F] {

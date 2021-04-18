@@ -1,5 +1,3 @@
 package http
 
-object vars {
-
-}
+object vars {}

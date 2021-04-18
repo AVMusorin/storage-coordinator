@@ -1,21 +1,15 @@
 package config
 
-import com.comcast.ip4s.{ Host, Port }
-import domain.states.OnEvent
-import domain.states.Transition
+import algebras.FSM
+import com.comcast.ip4s.Host
+import com.comcast.ip4s.Port
 
 import scala.concurrent.duration.FiniteDuration
 
 object data {
   case class AppConfig(
-      fsmConfig: FSMConfig,
       httpClientConfig: HttpClientConfig,
       httpServerConfig: HttpServerConfig
-  )
-
-  case class FSMConfig(
-      transitions: List[Transition],
-      onEvents: List[OnEvent]
   )
 
   case class HttpServerConfig(

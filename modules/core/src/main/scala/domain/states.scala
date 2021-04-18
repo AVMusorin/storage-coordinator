@@ -7,6 +7,8 @@ import derevo.circe.magnolia.decoder
 import derevo.circe.magnolia.encoder
 import derevo.derive
 
+import scala.util.control.NoStackTrace
+
 object states {
 
   /**
@@ -43,6 +45,7 @@ object states {
   sealed trait FSMState
 
   case object Init extends FSMState
+  case object None extends FSMState
 
   case object Load        extends FSMState
   case object LoadFailure extends FSMState
@@ -58,6 +61,7 @@ object states {
 
   @derive(decoder, encoder, eqv, show)
   sealed trait Event
+  case object Reset extends Event
   case object Start       extends Event
   case object DataLoaded  extends Event
   case object DataFailed  extends Event
@@ -70,4 +74,7 @@ object states {
 
 //  TODO: move somewhere
   case class ChangeFSMState(event: Event)
+
+  sealed trait FSMError         extends NoStackTrace
+  case object InvalidEventError extends FSMError
 }

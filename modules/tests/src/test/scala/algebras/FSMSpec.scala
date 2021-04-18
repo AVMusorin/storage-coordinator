@@ -1,33 +1,72 @@
 package algebras
 
+import algebras.handler.ActionHandler
 import cats.effect.IO
 import cats.effect.Ref
+import cats.effect.Sync
 import domain.states
+import domain.states.Event
+import domain.states.FSMState
 import domain.states.Init
 import domain.states.Load
-import domain.states.On
 import domain.states.Start
-import domain.states.Transition
 import weaver.SimpleIOSuite
 
 object FSMSpec extends SimpleIOSuite {
-  val graph: Map[states.FSMState, Transition] = Map(
-    Init -> Transition(Init, On(Start, Load)),
-    Load -> Transition(Load, On(Start, Init))
-  )
-  test("get state for simple fsm") {
+
+  test("get current state for simple fsm") {
+    val handler = new ActionHandler[IO] {
+      override def handle(state: FSMState, event: Event): IO[Either[Throwable, FSMState]] =
+        Sync[IO].delay(Right(Init))
+    }
+
     for {
-      init <- Ref[IO].of(Transition(Init, On(Start, Load)))
-      current <- new FSMSimple[IO](init = init, graph = graph).currentState
-    } yield expect.same(current, Transition(Init, On(Start, Load)))
+      init    <- Ref[IO].of(SimpleStateStore(Init))
+      current <- new FSMSimple[IO](init = init, handler = handler).currentState
+    } yield expect.same(current, Init)
   }
 
-  test("change state for simple fsm") {
+  test("error in actions during transition") {
+    val handler = new ActionHandler[IO] {
+      override def handle(state: FSMState, event: Event): IO[Either[Throwable, FSMState]] =
+        Sync[IO].delay(Left(new Throwable("error")))
+    }
+
     for {
-      init <- Ref[IO].of(Transition(Init, On(Start, Load)))
-      fsm = new FSMSimple[IO](init = init, graph = graph)
-      _ <- fsm.transition(Start)
-      newState <- fsm.currentState
-    } yield expect.same(newState, Transition(Load, On(Start, Init)))
+      init <- Ref[IO].of(SimpleStateStore(Init))
+      fsm = new FSMSimple[IO](init = init, handler = handler)
+      cState1      <- fsm.currentState
+      invalidTrans <- fsm.transition(Start).value
+      cState2      <- fsm.currentState
+    } yield expect.same(Init, cState1) &&
+      expect.same("error", invalidTrans.left.getOrElse(new Throwable).getMessage) &&
+      expect.same(Init, cState2)
+  }
+
+  test("valid transition") {
+    val handler = new ActionHandler[IO] {
+      override def handle(state: FSMState, event: Event): IO[Either[Throwable, FSMState]] = {
+        state match {
+          case Init =>
+            event match {
+              case Start =>
+                IO(println("some side efffects")) *>
+                  IO(Right(Load))
+              case _ => IO(Left(new Throwable))
+            }
+          case _ => IO(Left(new Throwable))
+        }
+      }
+    }
+
+    for {
+      init <- Ref[IO].of(SimpleStateStore(Init))
+      fsm = new FSMSimple[IO](init = init, handler = handler)
+      cState1      <- fsm.currentState
+      trans <- fsm.transition(Start).value
+      cState2      <- fsm.currentState
+    } yield expect.same(Init, cState1) &&
+      expect.same(Load, trans.getOrElse(states.None)) &&
+      expect.same(Load, cState2)
   }
 }

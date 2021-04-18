@@ -1,6 +1,7 @@
 import cats.effect.Async
 import cats.effect.Concurrent
 import cats.effect.Resource
+import config.data.AppConfig
 import config.data.HttpClientConfig
 import fs2.io.net.Network
 import org.http4s.client.Client
@@ -14,9 +15,8 @@ final case class AppResources[F[_]](
 )
 
 object AppResources {
-  def make[F[_]: Concurrent: Logger: MkHttpClient: Network]: Resource[F, AppResources[F]] = {
-    val httpConfig = HttpClientConfig(timeout = 1.seconds, idleTimeInPool=1.seconds)
-    val client: Resource[F, Client[F]] = MkHttpClient[F].newEmber(httpConfig)
+  def make[F[_]: Concurrent: Logger: MkHttpClient: Network](cfg: AppConfig): Resource[F, AppResources[F]] = {
+    val client: Resource[F, Client[F]] = MkHttpClient[F].newEmber(cfg.httpClientConfig)
     client.map(AppResources.apply)
   }
 }

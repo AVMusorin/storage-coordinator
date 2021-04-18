@@ -1,45 +1,48 @@
 package algebras
 
+import algebras.handler.ActionHandler
 import cats.Monad
+import cats.data.EitherT
 import cats.effect.Ref
 import cats.implicits._
 import dev.profunktor.redis4cats.RedisCommands
 import domain.states.Event
 import domain.states.FSMState
-import domain.states.Transition
 
 /**
   * Finite state machine
   */
 trait FSM[F[_]] {
-  def currentState: F[Transition]
-  def transition(event: Event): F[Transition]
+  def currentState: F[FSMState]
+  def transition(event: Event): EitherT[F, Throwable, FSMState]
 }
 
-class FSMPersistence[F[_]](private val cmd: RedisCommands[F, String, Int]) extends FSM[F] {
-  override def currentState: F[Transition] = ???
+class FSMPersistence[F[_]: Monad](private val cmd: RedisCommands[F, String, Int]) extends FSM[F] {
+  override def currentState: F[FSMState] = ???
 
-  override def transition(event: Event): F[Transition] = ???
+  override def transition(event: Event): EitherT[F, Throwable, FSMState] = ???
 }
 
-class FSMSimple[F[_]: Monad](private val init: Ref[F, Transition], graph: Map[FSMState, Transition]) extends FSM[F] {
-  override def currentState: F[Transition] = init.get
+/**
+ * case class to store subtypes of FSMState in [[cats.effect.Ref]]
+ */
+case class SimpleStateStore(state: FSMState)
 
-  override def transition(event: Event): F[Transition] = {
-    val newT = currentState.fmap { curState: Transition =>
-      val curTrans = graph.getOrElse(curState.state, throw new Exception("Invalid state")) // TODO: better exception
-      // TODO: add logging about invalid events
-      val newTransition = curTrans
-        .getStateByEvent(event)
-        .map { newState =>
-          graph.getOrElse(newState, curState)
-        }
-        .getOrElse(curTrans)
-      newTransition
-    }
+/**
+ * Simple FSM stores states in memory and will be reset after restart
+ * @param init an initial state
+ * @param handler handler for processing states
+ */
+class FSMSimple[F[_]: Monad](
+    private val init: Ref[F, SimpleStateStore],
+    handler: ActionHandler[F]
+) extends FSM[F] {
+  override def currentState: F[FSMState] = init.get.map(_.state)
+
+  override def transition(event: Event): EitherT[F, Throwable, FSMState] =
     for {
-      n <- newT
-      _ <- init.set(n)
-    } yield n
-  }
+      cState <- EitherT.right(currentState)
+      state  <- EitherT(handler.handle(cState, event))
+      _      <- EitherT.right(init.set(SimpleStateStore(state)))
+    } yield state
 }
