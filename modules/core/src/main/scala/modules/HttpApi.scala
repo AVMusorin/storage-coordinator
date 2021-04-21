@@ -12,14 +12,15 @@ import org.http4s.server.middleware.CORS
 import org.http4s.server.middleware.RequestLogger
 import org.http4s.server.middleware.ResponseLogger
 import org.http4s.server.middleware.Timeout
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration._
 
 object HttpApi {
-  def make[F[_]: Async](services: Services[F]): HttpApi[F] = HttpApi[F](services)
+  def make[F[_]: Async: Logger](services: Services[F]): HttpApi[F] = HttpApi[F](services)
 }
 
-final case class HttpApi[F[_]: Async] private (services: Services[F]) {
+final case class HttpApi[F[_]: Async: Logger] private (services: Services[F]) {
   private val fsmRoutes = new FSMRoutes[F](services.fsm).routes
 
   private val openRoutes: HttpRoutes[F] = fsmRoutes

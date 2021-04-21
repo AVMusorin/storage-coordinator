@@ -1,3 +1,0 @@
-package http
-
-object vars {}

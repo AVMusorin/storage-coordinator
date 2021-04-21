@@ -3,58 +3,58 @@ package algebras
 import cats.effect.Concurrent
 import cats.effect.kernel.Async
 import cats.implicits._
-import domain.states.Event
-import domain.states.FSMState
+import domain.states.EventType
+import domain.states.FSMStateType
 import domain.states._
 import org.typelevel.log4cats.Logger
 
 object handler {
 
+  /**
+    * Handle events and execute actions
+    */
   trait ActionHandler[F[_]] {
-    def handle(state: FSMState, event: Event): F[Either[Throwable, FSMState]]
+    def handle(state: FSMStateType, event: EventType): F[Either[Throwable, FSMStateType]]
   }
 
   object SimpleStorageHandler {
     def make[F[_]: Concurrent: Logger: Async]: ActionHandler[F] =
-      (state: FSMState, event: Event) => {
+      (state: FSMStateType, event: EventType) => {
         state match {
-          case s@Init =>
+          case s @ Init =>
             event match {
-              case e@Start =>
+              case e @ Start =>
                 info(s, e) *>
                   Async[F].delay(Right(Load))
-              case e@_ => invalidEvent(s, e)
+              case e @ _ => invalidEvent(s, e)
             }
-          case s@Load =>
+          case s @ Load =>
             event match {
-              case e@DataLoaded =>
+              case e @ DataLoaded =>
                 info(s, e) *>
                   Async[F].delay(Right(Finish))
-              case e@DataFailed =>
-                info(s, e) *>
-                  Logger[F].warn("Failed loading data") *>
-                  Async[F].delay(Right(Load))
-              case e@_ => invalidEvent(s, e)
+              case e @ _ => invalidEvent(s, e)
             }
-          case s@Finish =>
+          case s @ Finish =>
             event match {
-              case e@Reset =>
+              case e @ Reset =>
                 info(s, e) *>
                   Async[F].delay(Right(Init))
-              case e@_ => invalidEvent(s, e)
+              case e @ _ => invalidEvent(s, e)
             }
-          case s@_ => Logger[F].error(s"Invalid state '$s'") *>
-            Async[F].delay(Left(new Throwable))
+          case s @ _ =>
+            Logger[F].error(s"Invalid state '$s'") *>
+              Async[F].delay(Left(new Throwable))
         }
       }
 
-    private def info[F[_]: Logger](s: FSMState, e: Event): F[Unit] =
+    private def info[F[_]: Logger](s: FSMStateType, e: EventType): F[Unit] =
       Logger[F].info(s"Execute event '$e' on state '$s'")
 
-    private def error[F[_]: Logger](s: FSMState, e: Event): F[Unit] =
+    private def error[F[_]: Logger](s: FSMStateType, e: EventType): F[Unit] =
       Logger[F].error(s"Invalid event '$e' for state '$s'")
 
-    private def invalidEvent[F[_]: Logger: Async](s: FSMState, e: Event): F[Either[Throwable, FSMState]] =
+    private def invalidEvent[F[_]: Logger: Async](s: FSMStateType, e: EventType): F[Either[Throwable, FSMStateType]] =
       error(s, e) *> Async[F].delay(Left(new Throwable))
   }
 }

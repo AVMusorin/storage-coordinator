@@ -8,8 +8,6 @@ import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 import org.typelevel.log4cats.Logger
 
-import scala.concurrent.duration.DurationInt
-
 final case class AppResources[F[_]](
     client: Client[F]
 )

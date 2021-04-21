@@ -22,8 +22,8 @@ object loader {
         case (h, p) =>
           AppConfig(
             HttpClientConfig(
-              timeout = 30.seconds,
-              idleTimeInPool = 60.seconds
+              timeout = 60.seconds,
+              idleTimeInPool = 30.seconds
             ),
             HttpServerConfig(
               host = h,

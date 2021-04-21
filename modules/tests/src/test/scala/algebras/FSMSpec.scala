@@ -5,8 +5,8 @@ import cats.effect.IO
 import cats.effect.Ref
 import cats.effect.Sync
 import domain.states
-import domain.states.Event
-import domain.states.FSMState
+import domain.states.EventType
+import domain.states.FSMStateType
 import domain.states.Init
 import domain.states.Load
 import domain.states.Start
@@ -16,7 +16,7 @@ object FSMSpec extends SimpleIOSuite {
 
   test("get current state for simple fsm") {
     val handler = new ActionHandler[IO] {
-      override def handle(state: FSMState, event: Event): IO[Either[Throwable, FSMState]] =
+      override def handle(state: FSMStateType, event: EventType): IO[Either[Throwable, FSMStateType]] =
         Sync[IO].delay(Right(Init))
     }
 
@@ -28,7 +28,7 @@ object FSMSpec extends SimpleIOSuite {
 
   test("error in actions during transition") {
     val handler = new ActionHandler[IO] {
-      override def handle(state: FSMState, event: Event): IO[Either[Throwable, FSMState]] =
+      override def handle(state: FSMStateType, event: EventType): IO[Either[Throwable, FSMStateType]] =
         Sync[IO].delay(Left(new Throwable("error")))
     }
 
@@ -45,7 +45,7 @@ object FSMSpec extends SimpleIOSuite {
 
   test("valid transition") {
     val handler = new ActionHandler[IO] {
-      override def handle(state: FSMState, event: Event): IO[Either[Throwable, FSMState]] = {
+      override def handle(state: FSMStateType, event: EventType): IO[Either[Throwable, FSMStateType]] = {
         state match {
           case Init =>
             event match {

@@ -8,12 +8,14 @@ import cats.effect.std.Supervisor
 import domain.states.Init
 import modules.HttpApi
 import modules.Services
-import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
+import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.defaults.Banner
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+
+import scala.concurrent.ExecutionContext.global
 
 object Main extends IOApp {
   implicit val logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
@@ -35,16 +37,22 @@ object Main extends IOApp {
                 } yield HttpApi.make[IO](services)
                 httpApi.map(cfg.httpServerConfig -> _)
               }
-              .flatMap {
+              .map {
                 case (cfg, api) =>
-                  EmberServerBuilder
-                    .default[IO]
-                    .withHost(cfg.host)
-                    .withPort(cfg.port)
+//                  EmberServerBuilder
+//                    .default[IO]
+//                    .withHost(cfg.host)
+//                    .withPort(cfg.port)
+//                    .withHttpApp(api.httpApp)
+//                    .build
+                  BlazeServerBuilder[IO](global)
+                    .bindHttp(cfg.port.value, cfg.host.toString)
                     .withHttpApp(api.httpApp)
-                    .build
+                    .serve
+                    .compile
               }
-              .use(showEmberBanner(_) >> IO.never.as(ExitCode.Success))
+              .use(_.drain.as(ExitCode.Success))
+//              .use(showEmberBanner(_) >> IO.never.as(ExitCode.Success))
           }
     }
 }

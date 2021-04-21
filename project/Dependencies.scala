@@ -6,7 +6,7 @@ object Dependencies {
     val cats          = "2.5.0"
     val catsEffect    = "3.0.1"
     val catsRetry     = "2.1.0"
-    val circe         = "0.14.0-M4"
+    val circe         = "0.13.0"
     val ciris         = "2.0.0-RC1"
     val derevo        = "0.12.2"
     val discipline    = "1.1.4"
@@ -46,6 +46,7 @@ object Dependencies {
     val circeGeneric = circe("generic")
     val circeParser  = circe("parser")
     val circeRefined = circe("refined")
+    val circeShapes = circe("shapes")
 
     val cirisCore    = ciris("ciris")
     val cirisEnum    = ciris("ciris-enumeratum")
@@ -65,8 +66,9 @@ object Dependencies {
     val refinedCore = "eu.timepit" %% "refined"      % V.refined
     val refinedCats = "eu.timepit" %% "refined-cats" % V.refined
 
-    val log4cats = "org.typelevel" %% "log4cats-slf4j" % V.log4cats
-    val newtype  = "io.estatico"   %% "newtype"        % V.newtype
+    val log4cats      = "org.typelevel" %% "log4cats-core"  % V.log4cats
+    val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % V.log4cats
+    val newtype       = "io.estatico"   %% "newtype"        % V.newtype
 
     val javaxCrypto = "javax.xml.crypto" % "jsr105-api" % V.javaxCrypto
 
