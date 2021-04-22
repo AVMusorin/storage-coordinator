@@ -44,7 +44,7 @@ object handler {
             }
           case s @ _ =>
             Logger[F].error(s"Invalid state '$s'") *>
-              Async[F].delay(Left(new Throwable))
+              Async[F].delay(Left(new Throwable(s"Invalid state '$s'")))
         }
       }
 
@@ -55,6 +55,6 @@ object handler {
       Logger[F].error(s"Invalid event '$e' for state '$s'")
 
     private def invalidEvent[F[_]: Logger: Async](s: FSMStateType, e: EventType): F[Either[Throwable, FSMStateType]] =
-      error(s, e) *> Async[F].delay(Left(new Throwable))
+      error(s, e) *> Async[F].delay(Left(new Throwable(s"Invalid event '$e' for state '$s'")))
   }
 }
