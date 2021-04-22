@@ -23,8 +23,8 @@ final class FSMRoutes[F[_]: Monad: JsonDecoder](fsm: FSM[F]) extends Http4sDsl[F
       ar.asJsonDecode[ChangeFSMState].flatMap { v =>
         fsm.transition(v.event).value.flatMap {
           case Right(value) => Ok(FSMState(value))
-            // TODO: type for errors and divide them BadRequest and Internal
-          case Left(e)      => BadRequest(e.getMessage)
+          // TODO: type for errors and divide them BadRequest and Internal
+          case Left(e) => BadRequest(e.getMessage)
         }
       }
   }

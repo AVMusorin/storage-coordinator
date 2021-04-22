@@ -41,6 +41,7 @@ object states {
     */
   @derive(decoder, encoder, eqv, show)
   sealed trait EventType
+  case object Unknown     extends EventType
   case object Reset       extends EventType
   case object Start       extends EventType
   case object DataLoaded  extends EventType
@@ -52,8 +53,11 @@ object states {
   object ChangeFSMState {
     def fromString(s: String): ChangeFSMState = {
       s.toLowerCase match {
-        case "start" => ChangeFSMState(Start)
-        case _       => ChangeFSMState(Reset)
+        case "start"       => ChangeFSMState(Start)
+        case "reset"       => ChangeFSMState(Reset)
+        case "dataloaded"  => ChangeFSMState(DataLoaded)
+        case "datachecked" => ChangeFSMState(DataChecked)
+        case _             => ChangeFSMState(Unknown)
       }
     }
 
